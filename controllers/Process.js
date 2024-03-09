@@ -105,7 +105,7 @@ export const getProcessUserByProcessId = async (req, res) => {
     console.log(req.query);
 
     let sql = `
-        SELECT process_user.id, process_user.price, process_user.count_day, process_user.start_day, process_user.end_day, process_user.status, process_user.total, process_user.paid, process_user.overdue,  users.name
+        SELECT process_user.id, process_user.price, process_user.count_day, process_user.status, process_user.total, process_user.paid, process_user.overdue,  users.name
         FROM process_user 
         LEFT JOIN users ON process_user.user_id = users.id
         WHERE process_user.process_id = ?  
@@ -154,16 +154,16 @@ export const getProcessUserByProcessId = async (req, res) => {
           id: item.id,
           price: item.price,
           count_day: item.count_day,
-          start_day: `${moment(item.start_day).format("DD-MM-")}${moment(
-            item.start_day
-          )
-            .add(543, "year")
-            .format("YYYY")}`,
-          end_day: `${moment(item.end_day).format("DD-MM-")}${moment(
-            item.end_day
-          )
-            .add(543, "year")
-            .format("YYYY")}`,
+          // start_day: `${moment(item.start_day).format("DD-MM-")}${moment(
+          //   item.start_day
+          // )
+          //   .add(543, "year")
+          //   .format("YYYY")}`,
+          // end_day: `${moment(item.end_day).format("DD-MM-")}${moment(
+          //   item.end_day
+          // )
+          //   .add(543, "year")
+          //   .format("YYYY")}`,
           status: item.status,
           total: item.total,
           paid: item.paid,
