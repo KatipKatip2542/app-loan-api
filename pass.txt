@@ -1,0 +1,5 @@
+app-loan.cz8qwk68qcmt.ap-southeast-2.rds.amazonaws.com
+postgres
+postgres
+app_loan_db
+123456789
