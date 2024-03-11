@@ -689,12 +689,12 @@ export const putreLoad = async (req, res) => {
       for (let i = 0; i < resultSqlSelect.length; i++) {
         const data = resultSqlSelect[i];
 
-        // await pool.query(sqlUpdateProcessUserList, [
-        //   i === 0 ? latestDate : null,
-        //   i === 0 ? 1 : 0,
-        //   i === 0 ? sumForPay : null, 
-        //   data.id,
-        // ]);
+        await pool.query(sqlUpdateProcessUserList, [
+          i === 0 ? latestDate : null,
+          i === 0 ? 1 : 0,
+          i === 0 ? sumForPay : null, 
+          data.id,
+        ]);
       }
 
       // UPDATE ยอดรวม ต่าง ๆ **********************************************
