@@ -658,9 +658,8 @@ export const putreLoad = async (req, res) => {
       );
 
       // สูตรใหม่ *******
-      // ( งวดที่เหลือ - 6 = xxx ) * (ราคาต่องวด = เงินที่จะได้)   //  (12 - 6 ) * (250) = 1500
-      const sumdayNotPay = count_day - countSQl
-      const calculate = (sumdayNotPay - 6) * (sumForPay)
+      // ( งวดที่จ่ายมาแล้ว - 6 = xxx ) * (ราคาต่องวด = เงินที่จะได้)   //  (12 - 6 ) * (250) = 1500
+      const calculate = (countSQl - 6) * (sumForPay)
 
       // UPDATE SQL ***********************************************************************
       const sqlSelect = `SELECT id FROM process_user_list WHERE process_user_id = ? `;
