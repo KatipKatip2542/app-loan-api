@@ -13,7 +13,7 @@ export const getAllRegister = async (req, res) => {
       if (search) {
         sql += ` AND name LIKE '%${search}%' `;
       } else {
-        sql += `LIMIT 0,9`;
+        // sql += `LIMIT 0,9`;
       }
 
       const [result] = await pool.query(sql, [process_id]);
