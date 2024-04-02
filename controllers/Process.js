@@ -808,11 +808,12 @@ export const putreLoad = async (req, res) => {
         Number(resultCheck[0].paid) -
         sumForPay;
 
-      const paidProcess =
-        sumNoForPay + resultCheckProcess[0].paid - price + sumForPay;
+      const paidProcess = resultCheckProcess[0].paid - paySum + sumForPay;
       const overdueProcess =
-        Number(resultCheckProcess[0].overdue + paySum )  - sumForPay ;
+        Number(resultCheckProcess[0].overdue + paySum) - sumForPay;
 
+      console.log(`paidProcess = `, paidProcess);
+      console.log(`resultCheckProcess = `, overdueProcess);
 
       // SQL UPDATE PROCESS_USER
       const sqlUpdate = `UPDATE process_user SET paid = ?, overdue = ?  WHERE id = ?   `;
