@@ -122,7 +122,6 @@ export const login = async (req, res) => {
     const [resultPassword] = await pool.query(sqlCheckPassword, [username]);
     const hashedPassword = resultPassword[0]?.password;
 
-    console.log(resultPassword);
 
     if (hashedPassword) {
       // ถอดรหัส
