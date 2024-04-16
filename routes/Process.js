@@ -1,6 +1,6 @@
 import express from 'express'
 import { authenticationToken } from '../Middleware/Auth.js'
-import { UpdateProcess, UpdateProcessUser, deleteProcess, getProcessTitle, getProcessUserByProcessId, getUserListByProcessUserId, postNewProcess, postNewProcessUser, putProcessUser, putUserList, putUserListCancel, putreLoad, updateProcess } from '../controllers/Process.js'
+import { UpdateProcess, UpdateProcessUser, deleteProcess, getProcessTitle, getProcessUserByProcessId, getUserListByProcessUserId, postEnd, postNewProcess, postNewProcessUser, putProcessUser, putUserList, putUserListCancel, putreLoad, updateProcess } from '../controllers/Process.js'
 const route = express.Router()
 
 // Process
@@ -13,6 +13,7 @@ route.delete('/:id', authenticationToken, deleteProcess)
 route.get('/user', authenticationToken, getProcessUserByProcessId)
 route.post('/user', authenticationToken , postNewProcessUser)
 route.put('/user' , authenticationToken, putProcessUser)
+route.put('/user/end', authenticationToken , postEnd)
 
 // User_List
 route.get('/user/list' , authenticationToken , getUserListByProcessUserId)

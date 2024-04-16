@@ -125,7 +125,7 @@ export const login = async (req, res) => {
 
     if (hashedPassword) {
       // ถอดรหัส
-      const isMatch = bcrypt.compareSync(password, hashedPassword);
+      const isMatch = bcrypt.compare(password, hashedPassword);
 
       // สร้าง token
       const secretKey = "mySecretKey";
