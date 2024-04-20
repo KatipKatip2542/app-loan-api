@@ -264,9 +264,10 @@ export const putProcessUser = async (req, res) => {
 
       let statusUpdatePrice = "";
       let statusUpdateDay = "";
+      let setStatusUpdateStatus = ""
       let statusSuccess = "";
 
-      if (resultCheck[0].total !== price || resultCheck[0].status !== status) {
+      if (resultCheck[0].total !== price ) {
         statusUpdatePrice = "YES";
       } else {
         statusUpdatePrice = "NO";
@@ -274,8 +275,7 @@ export const putProcessUser = async (req, res) => {
       }
 
       if (
-        resultCheck[0].count_day !== date ||
-        resultCheck[0].status !== status
+        resultCheck[0].count_day !== date 
       ) {
         statusUpdateDay = "YES";
       } else {
@@ -284,10 +284,12 @@ export const putProcessUser = async (req, res) => {
       }
 
       if (resultCheck[0].status !== status) {
-        statusSuccess = "YES";
+        setStatusUpdateStatus = "YES"
+        statusUpdateDay = "NO";
+        statusUpdateDay = "NO";
       }
 
-      if (statusUpdatePrice === "YES") {
+      if (statusUpdatePrice === "YES" || setStatusUpdateStatus === "YES") {
         // หายอด + กำไร แบบ ปกติ เช่น ยอด 5000 จะได้ 6000
         const newSum_day = (Number(resultCheck[0].total) / 1000) * 50;
         const newSum_process =
@@ -317,12 +319,14 @@ export const putProcessUser = async (req, res) => {
           totalProcess = resultCheckProcess[0].total + parseInt(sum_process);
           paidProcess = resultCheckProcess[0].paid + resultCheck[0].paid;
           overdueProcess = totalProcess - resultCheckProcess[0].paid;
+          statusSuccess = "YES";
         } else if (status == 2) {
           // Process
           // console.log("333333333333333333333333");
           totalProcess = resultCheckProcess[0].total - parseInt(sum_process);
           paidProcess = resultCheckProcess[0].paid - resultCheck[0].paid;
           overdueProcess = totalProcess - paidProcess;
+          statusSuccess = "YES";
         } else {
           throw new Error("ไม่พบสถานะผู้่ใช้งาน ");
         }
@@ -370,7 +374,7 @@ export const putProcessUser = async (req, res) => {
         let sumCountDay = 0;
         let textStatus = "";
 
-        console.log(`cuontDay :`, cuontDay);
+        // console.log(`cuontDay :`, cuontDay);
 
         if (date > cuontDay ) {
           sumCountDay = date - cuontDay;
@@ -421,8 +425,9 @@ export const putProcessUser = async (req, res) => {
         throw new Error("จำนวนเงิน หรือ จำนวนวัน เป็นค่าเดิมอยู่แล้ว");
       }
     } else {
-      throw new Error("ไม่สามารถทำรายการได้ หห");
+      throw new Error("ไม่สามารถทำรายการได้ สุดท้าย");
     }
+
   } catch (error) {
     console.error(error);
     res.status(500).json(error.message);
