@@ -833,11 +833,9 @@ export const putreLoad = async (req, res) => {
 
       console.log(`NewSumforpay :`, NewSumforpay);
 
-      
-
       // หาค่าใช้จ่าย ทั้งหมด เช่น ส่งมา 5000 จ่าย 6000
       const realSum = NewSumforpay_2 * count_day;
-      const realSum2 = sumForPay * count_day
+      const realSum2 = sumForPay * count_day;
 
       // หายอดที่จ่ายแล้ว
       let paySum = 0;
@@ -1129,7 +1127,7 @@ export const postProcressUserSort = async (req, res) => {
 // เคลียค่า
 export const postProcessUserClear = async (req, res) => {
   try {
-    const { process_id, id, price , count_day} = req.body;
+    const { process_id, id, price, count_day } = req.body;
     console.log(req.body);
     // ลบข้อมูล รีพอต ****************************************************************
     if (process_id && id) {
@@ -1155,25 +1153,27 @@ export const postProcessUserClear = async (req, res) => {
 
       if (Array.isArray(resultSqlViewId) && resultSqlViewId.length > 0) {
         const sqlViewIdList = `SELECT id FROM story_reload_list WHERE story_reload_id = ? `;
-        const [resultSqlViewIdList] = await pool.query(sqlViewIdList, [resultSqlViewId[0].id]);
-        const batchSize = 20; 
-      
+        const [resultSqlViewIdList] = await pool.query(sqlViewIdList, [
+          resultSqlViewId[0].id,
+        ]);
+        const batchSize = 20;
+
         // ขั้นตอนที่ 1: ลบแถวในตาราง story_reload_list
         for (let i = 0; i < resultSqlViewIdList.length; i += batchSize) {
           const batch = resultSqlViewIdList.slice(i, i + batchSize);
-          const batchIds = batch.map(item => item.id);
+          const batchIds = batch.map((item) => item.id);
           const deleteListReload = `DELETE FROM story_reload_list WHERE id IN (?)`;
           await pool.query(deleteListReload, [batchIds]);
         }
+
+        
+      // ขั้นตอนที่ 2: ลบแถวในตาราง story_reload
+      const deleteReload = `DELETE FROM story_reload WHERE process_user_id = ? `;
+      await pool.query(deleteReload, [id]);
       
-        // ขั้นตอนที่ 2: ลบแถวในตาราง story_reload
-        // const deleteReload = `DELETE FROM story_reload WHERE process_user_id = ? `;
-        // await pool.query(deleteReload, [id]);
       }
 
-  
 
-      
       // ลบข้อมูลจำนวนมากเสร็จ ค่อยทำ ส่วนต่อไป
 
       // ลบข้อมูล process ****************************************************************
@@ -1200,16 +1200,16 @@ export const postProcessUserClear = async (req, res) => {
         process_id,
       ]);
       const totalProcess = resultCheckProcess[0].total - realSum;
-      const paidProcess = resultCheckProcess[0].paid - paySum ;
+      const paidProcess = resultCheckProcess[0].paid - paySum;
       const overdueProcess = Number(totalProcess - paidProcess);
-       //SQL UPDATE PROCESS
-       const sqlUpdateProcess = `UPDATE process SET total = ? , paid = ?, overdue = ?  WHERE id = ?   `;
-        await pool.query(sqlUpdateProcess, [
-         totalProcess,
-         paidProcess,
-         overdueProcess,
-         process_id,
-       ]);
+      //SQL UPDATE PROCESS
+      const sqlUpdateProcess = `UPDATE process SET total = ? , paid = ?, overdue = ?  WHERE id = ?   `;
+      await pool.query(sqlUpdateProcess, [
+        totalProcess,
+        paidProcess,
+        overdueProcess,
+        process_id,
+      ]);
       res.status(200).json({
         message: "ทำรายการสำเร็จ",
       });
