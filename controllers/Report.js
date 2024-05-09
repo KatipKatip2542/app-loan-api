@@ -115,7 +115,7 @@ export const ReportUserReload = async (req, res) => {
     if (process_id) {
       let sqlCheck = `SELECT 
       users.name AS user , 
-      process_user.price AS price ,
+      story_reload.price AS price ,
       story_reload.price_pay AS price_pay , 
       DATE_FORMAT(story_reload.date, '%Y-%m-%d') AS date,
       story_reload.total_sum AS total_sum ,
@@ -142,7 +142,7 @@ export const ReportUserReload = async (req, res) => {
         sqlCheck += ` `;
       }
 
-      sqlCheck += `   GROUP BY   users.name, process_user.price, process_user.count_day, story_reload.price_pay, story_reload.date, story_reload.total_sum, story_reload.qty_overpay, process_user.id, story_reload.id `
+      sqlCheck += ` GROUP BY   users.name, process_user.price, process_user.count_day, story_reload.price_pay, story_reload.date, story_reload.total_sum, story_reload.qty_overpay, process_user.id, story_reload.id `
 
       const [resultCheck] = await pool.query(sqlCheck, [process_id]);
       // console.log(resultCheck);
@@ -235,3 +235,7 @@ export const pdfUserReload = async (req, res) => {
     res.status(500).json(error.message);
   }
 };
+
+
+
+// ข้อมูล array
