@@ -1154,10 +1154,11 @@ export const postProcessUserClear = async (req, res) => {
       // }
 
       if (Array.isArray(resultSqlViewId) && resultSqlViewId.length > 0) {
-        // ลบ รายการ ย่อยเสร็จก่อน
         const sqlViewIdList = `SELECT id FROM story_reload_list WHERE story_reload_id = ? `;
         const [resultSqlViewIdList] = await pool.query(sqlViewIdList, [resultSqlViewId[0].id]);
-        const batchSize = 100; // กำหนดขนาดของ batch
+        const batchSize = 20; 
+      
+        // ขั้นตอนที่ 1: ลบแถวในตาราง story_reload_list
         for (let i = 0; i < resultSqlViewIdList.length; i += batchSize) {
           const batch = resultSqlViewIdList.slice(i, i + batchSize);
           const batchIds = batch.map(item => item.id);
@@ -1165,12 +1166,12 @@ export const postProcessUserClear = async (req, res) => {
           await pool.query(deleteListReload, [batchIds]);
         }
       
-     
+        // ขั้นตอนที่ 2: ลบแถวในตาราง story_reload
+        const deleteReload = `DELETE FROM story_reload WHERE process_user_id = ? `;
+        await pool.query(deleteReload, [id]);
       }
 
-         // ลบหัวรายการ เมื่อ ลบรายการย่อยเสร็จหมดแล้ว
-         const deleteReload = `DELETE FROM story_reload WHERE process_user_id = ? `;
-         await pool.query(deleteReload, [id]);
+  
 
       
       // ลบข้อมูลจำนวนมากเสร็จ ค่อยทำ ส่วนต่อไป
