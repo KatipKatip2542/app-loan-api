@@ -1167,8 +1167,8 @@ export const postProcessUserClear = async (req, res) => {
         }
       
         // ขั้นตอนที่ 2: ลบแถวในตาราง story_reload
-        const deleteReload = `DELETE FROM story_reload WHERE process_user_id = ? `;
-        await pool.query(deleteReload, [id]);
+        // const deleteReload = `DELETE FROM story_reload WHERE process_user_id = ? `;
+        // await pool.query(deleteReload, [id]);
       }
 
   
