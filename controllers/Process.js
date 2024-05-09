@@ -1131,52 +1131,66 @@ export const postProcessUserClear = async (req, res) => {
   try {
     const { process_id, id, price , count_day} = req.body;
     console.log(req.body);
-
     // ลบข้อมูล รีพอต ****************************************************************
     if (process_id && id) {
       const sqlViewId = `SELECT id FROM story_reload WHERE process_user_id = ? `;
       const [resultSqlViewId] = await pool.query(sqlViewId, [id]);
-
       // TypeError: Cannot read properties of undefined (reading 'id')
+
+
+
+      // ลบข้อมูลจำนวนมาก
+      // if (Array.isArray(resultSqlViewId) && resultSqlViewId.length > 0) {
+      //   // ลบ รายการ รียอด
+      //   const sqlViewIdList = `SELECT id FROM story_reload_list WHERE story_reload_id = ? `;
+      //   const [resultSqlViewIdList] = await pool.query(sqlViewIdList, [
+      //     resultSqlViewId[0].id,
+      //   ]);
+      //   for (const item of resultSqlViewIdList) {
+      //     const deleteListReload = `DELETE FROM story_reload_list WHERE id = ? `;
+      //     await pool.query(deleteListReload, [item.id]);
+      //   }
+      //   // ลบ หัว รียอด
+      //   const deleteReload = `DELETE FROM story_reload WHERE process_user_id = ? `;
+      //   await pool.query(deleteReload, [id]);
+      // }
+
       if (Array.isArray(resultSqlViewId) && resultSqlViewId.length > 0) {
-        // ลบ รายการ รียอด
+        // ลบ รายการ รียอดเป็นชุดย่อยๆ
         const sqlViewIdList = `SELECT id FROM story_reload_list WHERE story_reload_id = ? `;
-        const [resultSqlViewIdList] = await pool.query(sqlViewIdList, [
-          resultSqlViewId[0].id,
-        ]);
-
-        for (const item of resultSqlViewIdList) {
-          const deleteListReload = `DELETE FROM story_reload_list WHERE id = ? `;
-          await pool.query(deleteListReload, [item.id]);
+        const [resultSqlViewIdList] = await pool.query(sqlViewIdList, [resultSqlViewId[0].id]);
+        const batchSize = 100; // กำหนดขนาดของ batch
+        for (let i = 0; i < resultSqlViewIdList.length; i += batchSize) {
+          const batch = resultSqlViewIdList.slice(i, i + batchSize);
+          const batchIds = batch.map(item => item.id);
+          const deleteListReload = `DELETE FROM story_reload_list WHERE id IN (?)`;
+          await pool.query(deleteListReload, [batchIds]);
         }
-
+      
         // ลบ หัว รียอด
         const deleteReload = `DELETE FROM story_reload WHERE process_user_id = ? `;
         await pool.query(deleteReload, [id]);
       }
 
-      // ลบข้อมูล process ****************************************************************
+      
+      // ลบข้อมูลจำนวนมากเสร็จ ค่อยทำ ส่วนต่อไป
 
+      // ลบข้อมูล process ****************************************************************
       const sqlViewProcessList = `SELECT id , price FROM process_user_list WHERE process_user_id = ? `;
       const [resultSqlViewProcessList] = await pool.query(sqlViewProcessList, [
         id,
       ]);
-
       // หายอดที่จ่ายแล้ว
       let paySum = 0;
-
       for (const item of resultSqlViewProcessList) {
         paySum += item.price;
         const updateListReload = `DELETE FROM process_user_list  WHERE id = ?  `;
         await pool.query(updateListReload, [item.id]);
       }
-
       const updateReload = `DELETE FROM process_user WHERE id = ?  `;
       await pool.query(updateReload, [id]);
-
       // อัพเดทข้อมูล ซ้าย  ****************************************************************
       const sumForPay = (price / 1000) * 50;
-
       // หาค่าใช้จ่าย ทั้งหมด เช่น ส่งมา 5000 จ่าย 6000
       const realSum = sumForPay * count_day;
 
@@ -1184,11 +1198,9 @@ export const postProcessUserClear = async (req, res) => {
       const [resultCheckProcess] = await pool.query(sqlCheckProcess, [
         process_id,
       ]);
-
       const totalProcess = resultCheckProcess[0].total - realSum;
       const paidProcess = resultCheckProcess[0].paid - paySum ;
       const overdueProcess = Number(totalProcess - paidProcess);
-
        //SQL UPDATE PROCESS
        const sqlUpdateProcess = `UPDATE process SET total = ? , paid = ?, overdue = ?  WHERE id = ?   `;
         await pool.query(sqlUpdateProcess, [
@@ -1197,7 +1209,6 @@ export const postProcessUserClear = async (req, res) => {
          overdueProcess,
          process_id,
        ]);
-
       res.status(200).json({
         message: "ทำรายการสำเร็จ",
       });
