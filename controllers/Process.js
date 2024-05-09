@@ -906,7 +906,7 @@ export const putreLoad = async (req, res) => {
           lastInsertedId,
           resultCheckProcessUserList[i]
             ? resultCheckProcessUserList[i].date
-            : "00-00-0000",
+            : "0000-00-00",
           myPrice,
         ]);
       }
@@ -1133,30 +1133,15 @@ export const postProcessUserClear = async (req, res) => {
     if (process_id && id) {
       const sqlViewId = `SELECT id FROM story_reload WHERE process_user_id = ? `;
       const [resultSqlViewId] = await pool.query(sqlViewId, [id]);
-      // TypeError: Cannot read properties of undefined (reading 'id')
 
       // ลบข้อมูลจำนวนมาก
-      // if (Array.isArray(resultSqlViewId) && resultSqlViewId.length > 0) {
-      //   // ลบ รายการ รียอด
-      //   const sqlViewIdList = `SELECT id FROM story_reload_list WHERE story_reload_id = ? `;
-      //   const [resultSqlViewIdList] = await pool.query(sqlViewIdList, [
-      //     resultSqlViewId[0].id,
-      //   ]);
-      //   for (const item of resultSqlViewIdList) {
-      //     const deleteListReload = `DELETE FROM story_reload_list WHERE id = ? `;
-      //     await pool.query(deleteListReload, [item.id]);
-      //   }
-      //   // ลบ หัว รียอด
-      //   const deleteReload = `DELETE FROM story_reload WHERE process_user_id = ? `;
-      //   await pool.query(deleteReload, [id]);
-      // }
-
+ 
       if (Array.isArray(resultSqlViewId) && resultSqlViewId.length > 0) {
         const sqlViewIdList = `SELECT id FROM story_reload_list WHERE story_reload_id = ? `;
         const [resultSqlViewIdList] = await pool.query(sqlViewIdList, [
           resultSqlViewId[0].id,
         ]);
-        const batchSize = 20;
+        const batchSize = 50;
 
         // ขั้นตอนที่ 1: ลบแถวในตาราง story_reload_list
         for (let i = 0; i < resultSqlViewIdList.length; i += batchSize) {
@@ -1170,7 +1155,7 @@ export const postProcessUserClear = async (req, res) => {
       // ขั้นตอนที่ 2: ลบแถวในตาราง story_reload
       const deleteReload = `DELETE FROM story_reload WHERE process_user_id = ? `;
       await pool.query(deleteReload, [id]);
-      
+
       }
 
 
