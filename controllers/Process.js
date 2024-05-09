@@ -1137,8 +1137,6 @@ export const postProcessUserClear = async (req, res) => {
       const [resultSqlViewId] = await pool.query(sqlViewId, [id]);
       // TypeError: Cannot read properties of undefined (reading 'id')
 
-
-
       // ลบข้อมูลจำนวนมาก
       // if (Array.isArray(resultSqlViewId) && resultSqlViewId.length > 0) {
       //   // ลบ รายการ รียอด
@@ -1156,7 +1154,7 @@ export const postProcessUserClear = async (req, res) => {
       // }
 
       if (Array.isArray(resultSqlViewId) && resultSqlViewId.length > 0) {
-        // ลบ รายการ รียอดเป็นชุดย่อยๆ
+        // ลบ รายการ ย่อยเสร็จก่อน
         const sqlViewIdList = `SELECT id FROM story_reload_list WHERE story_reload_id = ? `;
         const [resultSqlViewIdList] = await pool.query(sqlViewIdList, [resultSqlViewId[0].id]);
         const batchSize = 100; // กำหนดขนาดของ batch
@@ -1167,10 +1165,12 @@ export const postProcessUserClear = async (req, res) => {
           await pool.query(deleteListReload, [batchIds]);
         }
       
-        // ลบ หัว รียอด
-        const deleteReload = `DELETE FROM story_reload WHERE process_user_id = ? `;
-        await pool.query(deleteReload, [id]);
+     
       }
+
+         // ลบหัวรายการ เมื่อ ลบรายการย่อยเสร็จหมดแล้ว
+         const deleteReload = `DELETE FROM story_reload WHERE process_user_id = ? `;
+         await pool.query(deleteReload, [id]);
 
       
       // ลบข้อมูลจำนวนมากเสร็จ ค่อยทำ ส่วนต่อไป
