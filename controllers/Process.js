@@ -906,7 +906,7 @@ export const putreLoad = async (req, res) => {
           lastInsertedId,
           resultCheckProcessUserList[i]
             ? resultCheckProcessUserList[i].date
-            : "0000-00-00",
+            : null,
           myPrice,
         ]);
       }
@@ -926,6 +926,7 @@ export const putreLoad = async (req, res) => {
           data.id,
         ]);
       }
+
 
       // UPDATE ยอดรวม ต่าง ๆ **********************************************
 
