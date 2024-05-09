@@ -911,7 +911,7 @@ export const putreLoad = async (req, res) => {
         ]);
       }
 
-      // UPDATE process_user_list
+      // UPDATE process_user_list test
       const sqlUpdateProcessUserList = `UPDATE process_user_list SET date = ?, status = ? , price = ?, status_count = ? WHERE id = ? `;
 
       for (let i = 0; i < resultSqlSelect.length; i++) {
