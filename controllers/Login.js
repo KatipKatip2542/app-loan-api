@@ -122,10 +122,11 @@ export const login = async (req, res) => {
     const [resultPassword] = await pool.query(sqlCheckPassword, [username]);
     const hashedPassword = resultPassword[0]?.password;
 
-
+    
     if (hashedPassword) {
+
       // ถอดรหัส
-      const isMatch = bcrypt.compare(password, hashedPassword);
+      const isMatch = await bcrypt.compare(password, hashedPassword);
 
       // สร้าง token
       const secretKey = "mySecretKey";
@@ -140,7 +141,7 @@ export const login = async (req, res) => {
 
       const token = jwt.sign(userData, secretKey, { expiresIn: "1d" });
 
-      if (isMatch) {
+      if (isMatch  ) {
         res.status(200).json({ message: " เข้าสู่ระบบสำเร็จ", token });
       } else {
         res.status(401).json({ message: " ไม่พบผู้ใช้งานในระบบ" });
