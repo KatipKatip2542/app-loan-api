@@ -3,6 +3,8 @@ import bcrypt from "bcrypt";
 const saltRounds = 10; // จำนวนรอบการเก็บ salt
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
+import dotenv from 'dotenv';
+dotenv.config();
 
 export const getAllRegister = async (req, res) => {
   try {
@@ -159,7 +161,7 @@ export const getEmail = async (req, res) => {
   let connection;
   try {
     connection = await pool.getConnection();
-    const sql = "SELECT id, email, app_password FROM change_password ";
+    const sql = "SELECT id, email FROM change_password ";
     const [result] = await connection.query(sql);
     return res.status(200).json(result[0]);
   } catch (error) {
@@ -173,16 +175,15 @@ export const getEmail = async (req, res) => {
 
 export const putEmail = async (req, res) => {
   let connection;
-  const { id, email, app_password } = req.body;
-  console.log(req.body);
+  const { id, email } = req.body;
 
   try {
     connection = await pool.getConnection();
-    if (!id || !email || !app_password)
+    if (!id || !email )
       return res.status(400).json({ message: "ส่งข้อมูลไม่ครบ" });
 
-    const sql = `UPDATE change_password SET email = ? , app_password = ? WHERE id = ?`;
-    await connection.query(sql, [email, app_password, id]);
+    const sql = `UPDATE change_password SET email = ?  WHERE id = ?`;
+    await connection.query(sql, [email, id]);
     res.status(200).json({ message: "บันทึกสำเร็จ" });
   } catch (error) {
     console.log(error);
@@ -199,17 +200,16 @@ export const sendEmailForChangePassword = async (req, res) => {
   try {
     connection = await pool.getConnection();
     // check ก่อนว่ามี Email และ app password ไหม
-    const sqlCheck = `SELECT id, email, app_password FROM change_password WHERE id = ? `;
+    const sqlCheck = `SELECT id, email FROM change_password WHERE id = ? `;
     const [resultCheck] = await connection.query(sqlCheck, [1]);
     const user = resultCheck[0];
 
-    if (!user || user.email === "" || user.app_password === "") {
+    if (!user || user.email === "") {
       return res
         .status(400)
         .json({ message: "ไม่พบ Email หรือข้อมูลไม่สมบูรณ์" });
     }
     const email = user.email;
-    const app_password = user.app_password;
 
     // สร้าง Password ใหม่
     const newPassword = Math.random().toString(36).slice(-8);
@@ -223,8 +223,8 @@ export const sendEmailForChangePassword = async (req, res) => {
     const transporter = nodemailer.createTransport({
       service: "gmail", // หรือ SMTP ของบริการอีเมลที่คุณใช้
       auth: {
-        user: email, 
-        pass: app_password, 
+        user: process.env.SENDMAIL_EMAIL, 
+        pass: process.env.SENDMAIL_APP_PASSWORD, 
       },
     });
 
