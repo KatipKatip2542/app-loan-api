@@ -2,6 +2,7 @@ import pool from "../Connect.js";
 import bcrypt from "bcrypt";
 const saltRounds = 10; // จำนวนรอบการเก็บ salt
 import jwt from "jsonwebtoken";
+import nodemailer from "nodemailer";
 
 export const getAllRegister = async (req, res) => {
   try {
@@ -47,7 +48,7 @@ export const postRegister = async (req, res) => {
         res.status(400).json({ message: "มีผู้ใช้งานนี้แล้ว" });
       } else {
         const sql = `INSERT INTO users (username, password, status, name, tell, address, process_id ) VALUES (?,?,?,?,?,?, ?)`;
-        const [result] = await pool.query(sql, [
+        await pool.query(sql, [
           username || "",
           hashedPassword || "",
           1,
@@ -122,9 +123,7 @@ export const login = async (req, res) => {
     const [resultPassword] = await pool.query(sqlCheckPassword, [username]);
     const hashedPassword = resultPassword[0]?.password;
 
-    
     if (hashedPassword) {
-
       // ถอดรหัส
       const isMatch = await bcrypt.compare(password, hashedPassword);
 
@@ -141,15 +140,113 @@ export const login = async (req, res) => {
 
       const token = jwt.sign(userData, secretKey, { expiresIn: "1d" });
 
-      if (isMatch  ) {
-        res.status(200).json({ message: " เข้าสู่ระบบสำเร็จ", token });
+      if (isMatch) {
+        return res.status(200).json({ message: " เข้าสู่ระบบสำเร็จ", token });
       } else {
-        res.status(401).json({ message: " ไม่พบผู้ใช้งานในระบบ" });
+        return res.status(401).json({ message: " ไม่พบผู้ใช้งานในระบบ" });
       }
     } else {
-      res.status(401).json({ message: " ไม่พบผู้ใช้งานในระบบ" });
+      return res.status(400).json({ message: "ไม่พบผู้ใช้งาน" });
     }
   } catch (error) {
-    console.error(error);
+    console.log(error);
+    return res.status(500).json(error.message);
   }
 };
+
+// Change Password for New App
+export const getEmail = async (req, res) => {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    const sql = "SELECT id, email, app_password FROM change_password ";
+    const [result] = await connection.query(sql);
+    return res.status(200).json(result[0]);
+  } catch (error) {
+    return res.status(500).json(error);
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+};
+
+export const putEmail = async (req, res) => {
+  let connection;
+  const { id, email, app_password } = req.body;
+  console.log(req.body);
+
+  try {
+    connection = await pool.getConnection();
+    if (!id || !email || !app_password)
+      return res.status(400).json({ message: "ส่งข้อมูลไม่ครบ" });
+
+    const sql = `UPDATE change_password SET email = ? , app_password = ? WHERE id = ?`;
+    await connection.query(sql, [email, app_password, id]);
+    res.status(200).json({ message: "บันทึกสำเร็จ" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.message);
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+};
+
+export const sendEmailForChangePassword = async (req, res) => {
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    // check ก่อนว่ามี Email และ app password ไหม
+    const sqlCheck = `SELECT id, email, app_password FROM change_password WHERE id = ? `;
+    const [resultCheck] = await connection.query(sqlCheck, [1]);
+    const user = resultCheck[0];
+
+    if (!user || user.email === "" || user.app_password === "") {
+      return res
+        .status(400)
+        .json({ message: "ไม่พบ Email หรือข้อมูลไม่สมบูรณ์" });
+    }
+    const email = user.email;
+    const app_password = user.app_password;
+
+    // สร้าง Password ใหม่
+    const newPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // อัปเดตรหัสผ่านในฐานข้อมูล
+    const sqlUpdate = `UPDATE users SET password = ? WHERE username = ?`;
+    await connection.query(sqlUpdate, [hashedPassword, "admin"]);
+
+    // ส่ง Email แจ้งรหัสผ่านใหม่
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // หรือ SMTP ของบริการอีเมลที่คุณใช้
+      auth: {
+        user: email, 
+        pass: app_password, 
+      },
+    });
+
+    const mailOptions = {
+      from: `"เปลี่ยนรหัสผ่าน loan app" <${email}>`,
+      to: email,
+      subject: "ทำรายการเปลี่ยนรหัสผ่านสำเร็จ",
+      text: `password ใหม่คือ : ${newPassword}`,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    return { success: true, message: "รหัสผ่านใหม่ถูกส่งไปยังอีเมลของคุณแล้ว" };
+
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json(error.message);
+  } finally {
+    if (connection) {
+      connection.release();
+    }
+  }
+};
+
+
