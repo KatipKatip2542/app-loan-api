@@ -27,7 +27,7 @@ export const postNewProcess = async (req, res) => {
   try {
     const { name, tell, address } = req.body;
 
-    if (name && tell) {
+    if (name ) {
       // เช็ค ค่าซ้ำ
       const sqlCheck = `SELECT id FROM process WHERE name = ? LIMIT 1`;
       const [resultCheck] = await pool.query(sqlCheck, [name]);
