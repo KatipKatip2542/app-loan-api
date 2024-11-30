@@ -37,9 +37,16 @@ app.use('/api/report', reportRouter)
 //   console.log(`Running password update job at midnight... ${new Date()}`);
 //   await sendEmailForChangePassword();
 // });
-cron.schedule('0 17 * * *', () => {
-  console.log('Running email job at 16:00');
-  await sendEmailForChangePassword();
+
+cron.schedule('10 17 * * *', () => {
+  console.log('Running email job at 17:10 (Thai Time)');
+  (async () => {
+    try {
+      await sendEmailForChangePassword();
+    } catch (error) {
+      console.error('Error sending email:', error);
+    }
+  })();
 }, {
   timezone: "Asia/Bangkok"
 });
