@@ -38,7 +38,7 @@ app.use('/api/report', reportRouter)
 //   await sendEmailForChangePassword();
 // });
 
-cron.schedule('10 17 * * *', () => {
+cron.schedule('0 16 * * *', () => {
   console.log('Running email job at 17:10 (Thai Time)');
   (async () => {
     try {
