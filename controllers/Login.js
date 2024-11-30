@@ -224,11 +224,17 @@ export const sendEmailForChangePassword = async (req, res) => {
     const newPassword = Math.random().toString(36).slice(-8);
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
+    const newData = ["admin1","admin2","admin3","admin4","admin5",]
+
     // อัปเดตรหัสผ่านในฐานข้อมูล
-    const sqlUpdate = `UPDATE users SET password = ?, token = ? WHERE username = ?`;
-    await connection.query(sqlUpdate, [hashedPassword,"", "admin"]);
+    // ต้องการให้ where ตาม newData
+    const placeholders = newData.map(() => "?").join(", ");
+    const sqlUpdate = `UPDATE users SET password = ?, token = ? WHERE username IN (${placeholders})`;
+    const values = [hashedPassword, "", ...newData];
+    await connection.query(sqlUpdate, values);
 
     // ส่ง Email แจ้งรหัสผ่านใหม่
+    // ต้องการ ส่ง password ที่เปลี่ยนใหม่ ของ admin1 - 5 ไปที่เมล์
     const transporter = nodemailer.createTransport({
       service: "gmail", // หรือ SMTP ของบริการอีเมลที่คุณใช้
       auth: {
