@@ -143,7 +143,7 @@ export const login = async (req, res) => {
       };
 
       const token = jwt.sign(userData, secretKey, { expiresIn: "1d" });
-      
+
       await connection.query(`UPDATE users SET token = ? WHERE id = ?`, [token, userData.id ])
 
 
@@ -225,8 +225,8 @@ export const sendEmailForChangePassword = async (req, res) => {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
     // อัปเดตรหัสผ่านในฐานข้อมูล
-    const sqlUpdate = `UPDATE users SET password = ? WHERE username = ?`;
-    await connection.query(sqlUpdate, [hashedPassword, "admin"]);
+    const sqlUpdate = `UPDATE users SET password = ?, token = ? WHERE username = ?`;
+    await connection.query(sqlUpdate, [hashedPassword,"", "admin"]);
 
     // ส่ง Email แจ้งรหัสผ่านใหม่
     const transporter = nodemailer.createTransport({
