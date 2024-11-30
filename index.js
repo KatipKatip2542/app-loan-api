@@ -33,9 +33,15 @@ app.use('/api/process', processRouter )
 app.use('/api/report', reportRouter)
 
 // ตั้งค่า Cron Job ให้ทำงานทุกเที่ยงคืน
-cron.schedule("0 16 * * *", async () => {
-  console.log(`Running password update job at midnight... ${new Date()}`);
+// cron.schedule("0 16 * * *", async () => {
+//   console.log(`Running password update job at midnight... ${new Date()}`);
+//   await sendEmailForChangePassword();
+// });
+cron.schedule('0 17 * * *', () => {
+  console.log('Running email job at 16:00');
   await sendEmailForChangePassword();
+}, {
+  timezone: "Asia/Bangkok"
 });
 
 
