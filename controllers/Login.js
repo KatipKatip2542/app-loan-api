@@ -118,11 +118,13 @@ export const deleteRegister = async (req, res) => {
 };
 
 export const login = async (req, res) => {
+  let connection;
   try {
+    connection = await pool.getConnection()
     const { username, password } = req.body;
 
     const sqlCheckPassword = `SELECT id, username, password, name, status, tell, address FROM users WHERE username =   ?`;
-    const [resultPassword] = await pool.query(sqlCheckPassword, [username]);
+    const [resultPassword] = await connection.query(sqlCheckPassword, [username]);
     const hashedPassword = resultPassword[0]?.password;
 
     if (hashedPassword) {
@@ -141,6 +143,9 @@ export const login = async (req, res) => {
       };
 
       const token = jwt.sign(userData, secretKey, { expiresIn: "1d" });
+      
+      await connection.query(`UPDATE users SET token = ? WHERE id = ?`, [token, userData.id ])
+
 
       if (isMatch) {
         return res.status(200).json({ message: " เข้าสู่ระบบสำเร็จ", token });
@@ -153,6 +158,10 @@ export const login = async (req, res) => {
   } catch (error) {
     console.log(error);
     return res.status(500).json(error.message);
+  } finally {
+    if(connection){
+      connection.release()
+    }
   }
 };
 
