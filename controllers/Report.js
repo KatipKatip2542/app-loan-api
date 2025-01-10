@@ -238,4 +238,76 @@ export const pdfUserReload = async (req, res) => {
 
 
 
-// ข้อมูล array
+// ประวัติ บ้านที่ยังจ่ายเงินไม่ครบ
+export const reportCheckMyHome = async(req,res)=> {
+  let db = await pool.getConnection()
+  try {
+    const sql = `SELECT process.name , process.id
+    FROM process
+    INNER JOIN process_user ON process.id = process_user.process_id
+    WHERE process_user.status = ? 
+    GROUP BY process.id, process.name 
+    HAVING COUNT(process_user.id) > 0
+    `
+    const [result] = await db.query(sql, [0])
+
+    return res.status(200).json(result)
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error.message);
+  } finally {
+    if(db) db.release()
+  }
+}
+
+export const reportCheckMyHomeList = async(req,res)=> {
+  let db = await pool.getConnection()
+  const {id} = req.body
+  
+  try {
+
+ 
+    // List
+    const sql = `SELECT DISTINCT  process_user.id , users.name  ,process_user.total, process_user.paid, process_user.overdue, process_user.status
+    FROM process_user 
+    INNER JOIN process_user_list ON process_user.id = process_user_list.process_user_id
+    INNER JOIN users ON users.id = process_user.user_id
+    WHERE process_user.process_id = ? AND process_user.status = ?
+    `
+    const [result] = await db.query(sql, [id, 0])
+    
+    // sum_all
+    const sqlSum = `SELECT  process_user.id , process_user.total
+    FROM process_user 
+    WHERE process_user.process_id = ? 
+    `
+    const [resultSum] = await db.query(sqlSum, [id])
+
+
+    // ราคารวม
+    const sum_all = resultSum.reduce((sum, row)=> sum + row.total, 0)
+    // ยังไม่จ่าย
+    const sum_remaining = result.reduce((sum, row)=> sum + row.total, 0 )
+    // คงเหลือ
+    const sum_paying  = sum_all - sum_remaining
+    
+    
+    const data = {
+      result : result,
+      count_pay : resultSum.length,
+      count_no_pay : result.length,
+      sum_all : sum_all,
+      sum_paying : sum_paying,
+      sum_remaining : sum_remaining
+    
+    }
+    return res.status(200).json(data)
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json(error.message);
+  } finally {
+    if(db) db.release()
+  }
+}

@@ -13,7 +13,7 @@ export const getProcessTitle = async (req, res) => {
     if (search) {
       sql += `WHERE name LIKE '%${search}%' `;
     } else {
-      sql += ` LIMIT 20`;
+      sql += ` `;
     }
 
     const [result] = await pool.query(sql);
