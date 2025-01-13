@@ -278,8 +278,9 @@ export const reportCheckMyHomeList = async(req,res)=> {
     const [result] = await db.query(sql, [id, 0])
     
     // sum_all
-    const sqlSum = `SELECT  process_user.id , process_user.total
+    const sqlSum = `SELECT  process_user.id , process_user.total, process.name AS name
     FROM process_user 
+    INNER JOIN process ON process_user.process_id = process.id
     WHERE process_user.process_id = ? 
     `
     const [resultSum] = await db.query(sqlSum, [id])
@@ -291,6 +292,8 @@ export const reportCheckMyHomeList = async(req,res)=> {
     const sum_remaining = result.reduce((sum, row)=> sum + row.total, 0 )
     // คงเหลือ
     const sum_paying  = sum_all - sum_remaining
+
+    const process_name = resultSum[0].name
     
     
     const data = {
@@ -299,7 +302,8 @@ export const reportCheckMyHomeList = async(req,res)=> {
       count_no_pay : result.length,
       sum_all : sum_all,
       sum_paying : sum_paying,
-      sum_remaining : sum_remaining
+      sum_remaining : sum_remaining ,
+      name : process_name
     
     }
     return res.status(200).json(data)
