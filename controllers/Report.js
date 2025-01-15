@@ -142,7 +142,7 @@ export const ReportUserReload = async (req, res) => {
         sqlCheck += ` `;
       }
 
-      sqlCheck += ` GROUP BY   users.name, process_user.price, process_user.count_day, story_reload.price_pay, story_reload.date, story_reload.total_sum, story_reload.qty_overpay, process_user.id, story_reload.id `
+      sqlCheck += ` GROUP BY   users.name, process_user.price, process_user.count_day, story_reload.price_pay, story_reload.date, story_reload.total_sum, story_reload.qty_overpay, process_user.id, story_reload.id `;
 
       const [resultCheck] = await pool.query(sqlCheck, [process_id]);
       // console.log(resultCheck);
@@ -210,23 +210,21 @@ export const pdfUserReload = async (req, res) => {
       for (const item of resultCheck) {
         const sql = `SELECT  DATE_FORMAT(date, '%Y-%m-%d') AS date , price , story_reload_id   FROM story_reload_list  WHERE story_reload_id = ?`;
         const [result] = await pool.query(sql, [item.id]);
-        const data_list = result
+        const data_list = result;
         const test = {
           user: item.user,
           price: item.price,
-          count_day : item.count_day,
-          price_pay : item.price_pay,
-          date : item.date, 
-          total_sum : item.total_sum, 
-          qty_overpay : item.qty_overpay, 
-          data_list : data_list
-        }
-        data.push(test)
-    
+          count_day: item.count_day,
+          price_pay: item.price_pay,
+          date: item.date,
+          total_sum: item.total_sum,
+          qty_overpay: item.qty_overpay,
+          data_list: data_list,
+        };
+        data.push(test);
       }
 
-
-      res.status(200).json(data)
+      res.status(200).json(data);
     } else {
       throw new Error("ไม่พบบ้าน");
     }
@@ -236,11 +234,9 @@ export const pdfUserReload = async (req, res) => {
   }
 };
 
-
-
 // ประวัติ บ้านที่ยังจ่ายเงินไม่ครบ
-export const reportCheckMyHome = async(req,res)=> {
-  let db = await pool.getConnection()
+export const reportCheckMyHome = async (req, res) => {
+  let db = await pool.getConnection();
   try {
     const sql = `SELECT process.name , process.id
     FROM process
@@ -248,70 +244,79 @@ export const reportCheckMyHome = async(req,res)=> {
     WHERE process_user.status = ? 
     GROUP BY process.id, process.name 
     HAVING COUNT(process_user.id) > 0
-    `
-    const [result] = await db.query(sql, [0])
+    `;
+    const [result] = await db.query(sql, [0]);
 
-    return res.status(200).json(result)
-    
+    return res.status(200).json(result);
   } catch (error) {
     console.log(error);
     res.status(500).json(error.message);
   } finally {
-    if(db) db.release()
+    if (db) db.release();
   }
-}
+};
 
-export const reportCheckMyHomeList = async(req,res)=> {
-  let db = await pool.getConnection()
-  const {id} = req.body
-  
+export const reportCheckMyHomeList = async (req, res) => {
+  let db = await pool.getConnection();
+  const { id } = req.body;
+
   try {
+    const date = Date.now();
 
- 
-    // List
+    //ลูกค้าที่ยังไม่จ่าย
     const sql = `SELECT DISTINCT  process_user.id , users.name  ,process_user.total, process_user.paid, process_user.overdue, process_user.status
     FROM process_user 
     INNER JOIN process_user_list ON process_user.id = process_user_list.process_user_id
     INNER JOIN users ON users.id = process_user.user_id
-    WHERE process_user.process_id = ? AND process_user.status = ?
-    `
-    const [result] = await db.query(sql, [id, 0])
-    
+    WHERE process_user.process_id = ? AND process_user.status = ?  
+    AND process_user.id NOT IN (
+      SELECT process_user_id 
+      FROM process_user_list 
+      WHERE date = CURDATE()
+  )
+    `;
+    const [result] = await db.query(sql, [id, 0]);
+    console.log({result});
+
+    // วันนี้มลูกค้าจ่ายมาแล้ว
+    const sql2 = `SELECT DISTINCT process_user.id
+  FROM process_user 
+  INNER JOIN process_user_list 
+      ON process_user.id = process_user_list.process_user_id
+  WHERE process_user.process_id = ? 
+    AND process_user.status = ?  
+    AND process_user.id IN (
+        SELECT process_user_id 
+        FROM process_user_list 
+        WHERE date = CURDATE() AND price > 0
+    ) `;
+    const [result2] = await db.query(sql2, [id, 0]);
+
+    console.log({result2});
+
     // sum_all
     const sqlSum = `SELECT  process_user.id , process_user.total, process.name AS name
     FROM process_user 
     INNER JOIN process ON process_user.process_id = process.id
     WHERE process_user.process_id = ? 
-    `
-    const [resultSum] = await db.query(sqlSum, [id])
+    `;
+    const [resultSum] = await db.query(sqlSum, [id]);
 
+    const sum_all =  result.length + result2.length
+    const process_name = resultSum[0].name;
 
-    // ราคารวม
-    const sum_all = resultSum.reduce((sum, row)=> sum + row.total, 0)
-    // ยังไม่จ่าย
-    const sum_remaining = result.reduce((sum, row)=> sum + row.total, 0 )
-    // คงเหลือ
-    const sum_paying  = sum_all - sum_remaining
-
-    const process_name = resultSum[0].name
-    
-    
     const data = {
-      result : result,
-      count_pay : resultSum.length,
-      count_no_pay : result.length,
-      sum_all : sum_all,
-      sum_paying : sum_paying,
-      sum_remaining : sum_remaining ,
-      name : process_name
-    
-    }
-    return res.status(200).json(data)
-
+      result: result,
+      name: process_name,
+      count_pay: result2.length ,
+      count_no_pay: result.length,
+      sum_all: sum_all ,
+    };
+    return res.status(200).json(data);
   } catch (error) {
     console.log(error);
     res.status(500).json(error.message);
   } finally {
-    if(db) db.release()
+    if (db) db.release();
   }
-}
+};
