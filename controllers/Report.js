@@ -279,6 +279,7 @@ export const reportCheckMyHomeList = async (req, res) => {
     console.log({result});
 
     // วันนี้มลูกค้าจ่ายมาแล้ว
+    // ต้องการให้ WHERE date = CURDATE() เป็น date = เมื่อวานนี้
     const sql2 = `SELECT DISTINCT process_user.id
   FROM process_user 
   INNER JOIN process_user_list 
@@ -288,7 +289,7 @@ export const reportCheckMyHomeList = async (req, res) => {
     AND process_user.id IN (
         SELECT process_user_id 
         FROM process_user_list 
-        WHERE date = CURDATE() AND price > 0
+        WHERE date = CURDATE() - INTERVAL 1 DAY AND price > 0
     ) `;
     const [result2] = await db.query(sql2, [id, 0]);
 
